@@ -1,7 +1,6 @@
 linkedinScraper.zip
 .DS_Store
 __pycache__
-scraper_folder
 invoke.txt
 .env
 cookies.pkl
