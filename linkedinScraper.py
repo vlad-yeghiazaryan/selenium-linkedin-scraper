@@ -89,14 +89,18 @@ class SeleniumScraper():
         def wrapper(self, user):
             self.load_cookie()
             self.driver.get(user)
-
+            self.load_cookie()
             # Check if the url was redirected
             user_url = user if user[-1]=='/' else user+'/'
             if self.driver.current_url == user_url:
                 profile = func(self, user)
             else:
-                self.signIn()
-                profile = func(self, user)
+                try:
+                    self.driver.find_element_by_css_selector('.main__sign-in-link').click()
+                    self.signIn()
+                    profile = func(self, user)
+                except:
+                    profile = func(self, user)
             return profile
         return wrapper
 
