@@ -5,14 +5,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
-from sys import platform
+import sys
 from time import sleep
 import numpy as np
 import pickle
 
 class SeleniumScraper():
     def __init__(self, url, driverPath='drivers/chromedriverLinux64', wait_time='default'):
-        self.driverPath = driverPath if platform != "darwin" else 'drivers/chromedriverMac64'
+        self.driverPath = driverPath if sys.platform != "darwin" else 'drivers/chromedriverMac64'
         self.base_url = url
         self.wait_time = wait_time if wait_time != 'default' else abs(
             np.random.normal(7, 2, size=(1,)).item())
@@ -35,9 +35,26 @@ class SeleniumScraper():
 
     def login(self, username, password):
         def wrapper():
-            self.driver.find_element(By.ID, "username").send_keys(username)
-            self.driver.find_element(By.ID, "password").send_keys(password)
-            self.driver.find_element(By.XPATH, '//*[@class="btn__primary--large from__button--floating"]').click()
+            try:
+                # if all goes well
+                self.driver.find_element(By.ID, "username").send_keys(username)
+                self.driver.find_element(By.ID, "password").send_keys(password)
+                self.driver.find_element(By.XPATH, '//*[@class="btn__primary--large from__button--floating"]').click()
+            except:
+                try:
+                    # if we are in the sign up page
+                    self.driver.find_element(By.CSS_SELECTOR,'#email-or-phone').send_keys(username)
+                    self.driver.find_element(By.CSS_SELECTOR,'#password').send_keys(password)
+                    self.driver.find_element(By.CSS_SELECTOR,'.form-toggle').click()
+                except:
+                    # if back to sign-in page
+                    self.driver.find_element(By.CSS_SELECTOR,'#session_key').send_keys(username)
+                    self.driver.find_element(By.CSS_SELECTOR,'#session_password').send_keys(password)
+                    self.driver.find_element(By.CSS_SELECTOR,'.sign-in-form__submit-button').click()
+                    
+                    # email verification
+                    self.driver.find_element(By.CSS_SELECTOR,'#input__email_verification_pin').send_keys('682634')
+                    self.driver.find_element(By.CSS_SELECTOR,'#email-pin-submit-button').click()
             sleep(3)
             self.save_cookie()
         self.signIn = wrapper
@@ -92,16 +109,14 @@ class SeleniumScraper():
             self.load_cookie()
             # Check if the url was redirected
             user_url = user if user[-1]=='/' else user+'/'
-            if self.driver.current_url == user_url:
-                profile = func(self, user)
-            else:
+            if self.driver.current_url != user_url:
                 try:
-                    self.driver.find_element_by_css_selector('.main__sign-in-link').click()
                     self.signIn()
-                    profile = func(self, user)
+                    self.signIn()
+                    return func(self, user)
                 except:
-                    profile = func(self, user)
-            return profile
+                    pass
+            return func(self, user)
         return wrapper
 
     @handle_redirected

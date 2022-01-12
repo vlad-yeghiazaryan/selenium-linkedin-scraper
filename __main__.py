@@ -1,3 +1,5 @@
+import os
+from shutil import copyfile
 from decouple import config
 from linkedinScraper import SeleniumScraper
 
@@ -15,9 +17,11 @@ def main(request):
   return {'scraped_data': profiles}
 
 if __name__ == '__main__':
+  copyfile('scraper_folder/.env', '.env')
   base_url = 'https://www.linkedin.com'
   username = config("USERNAME")
   secret = config("PASSWORD")
+  os.remove('.env')
   try:
     with open('scraper_folder/users.txt', 'r') as f:
       users = f.readlines()

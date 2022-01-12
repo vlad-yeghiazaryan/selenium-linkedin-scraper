@@ -17,7 +17,7 @@ RUN apt-get update && apt-get -y install google-chrome-stable
 RUN mkdir -p ./dist
 RUN mkdir -p ./dist/drivers
 WORKDIR ./dist
-COPY __main__.py linkedinScraper.py requirements.txt .env .
+COPY __main__.py linkedinScraper.py requirements.txt .
 COPY drivers/chromedriverLinux64 ./drivers
 
 # Import python libs
