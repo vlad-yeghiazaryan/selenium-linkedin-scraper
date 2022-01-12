@@ -24,4 +24,7 @@ if __name__ == '__main__':
            'https://www.linkedin.com/in/ben-affleck-3603ab200/']
   request = {'url': base_url, 'username': username,
              'password': secret, 'profile_urls': users}
-  print(main(request))
+  data = main(request)
+  import json
+  with open('profiles.txt', 'w') as f:
+    json.dump(data, f)

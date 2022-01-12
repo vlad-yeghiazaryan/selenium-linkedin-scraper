@@ -1,12 +1,14 @@
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
-from time import sleep
 from sys import platform
+from time import sleep
 import numpy as np
-
+import pickle
 
 class SeleniumScraper():
     def __init__(self, url, driverPath='drivers/chromedriverLinux64', wait_time='default'):
@@ -18,11 +20,13 @@ class SeleniumScraper():
     def session(func):
         def wrapper(self, *args):
             options = Options()
-            options.headless = True
+            options.add_argument("--headless")
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
             self.driver = Chrome(service=Service(self.driverPath),options=options)
+            self.wait = WebDriverWait(self.driver, self.wait_time)
             self.driver.maximize_window()
+            self.driver.get(f'{self.base_url}/login?')
             self.signIn()
             data = func(self, *args)
             self.driver.quit()
@@ -31,12 +35,22 @@ class SeleniumScraper():
 
     def login(self, username, password):
         def wrapper():
-            self.driver.get(f'{self.base_url}/login?')
             self.driver.find_element(By.ID, "username").send_keys(username)
             self.driver.find_element(By.ID, "password").send_keys(password)
-            self.driver.find_element(
-                By.XPATH, '//*[@class="btn__primary--large from__button--floating"]').click()
+            self.driver.find_element(By.XPATH, '//*[@class="btn__primary--large from__button--floating"]').click()
+            sleep(3)
+            self.save_cookie()
         self.signIn = wrapper
+
+    def save_cookie(self, path='cookies.pkl'):
+        with open(path, 'wb') as filehandler:
+            pickle.dump(self.driver.get_cookies(), filehandler)
+
+    def load_cookie(self, path='cookies.pkl'):
+     with open(path, 'rb') as cookiesfile:
+         cookies = pickle.load(cookiesfile)
+         for cookie in cookies:
+             self.driver.add_cookie(cookie) 
 
     def get_elem(self, xpath, driver=None):
         driver = driver if driver != None else self.driver
@@ -71,18 +85,32 @@ class SeleniumScraper():
             item = None
         return item
 
-    def get_profile(self, user):
-        self.driver.get(user)
+    def handle_redirected(func):
+        def wrapper(self, user):
+            self.load_cookie()
+            self.driver.get(user)
 
+            # Check if the url was redirected
+            user_url = user if user[-1]=='/' else user+'/'
+            if self.driver.current_url == user_url:
+                profile = func(self, user)
+            else:
+                self.signIn()
+                profile = func(self, user)
+            return profile
+        return wrapper
+
+    @handle_redirected
+    def get_profile(self, user):
         # clicking buttons
         try:
-            self.get_elem('//*[contains(text(), "more experience")]').click()
-            self.get_elem('//*[@id="ember512"]/div/span/button').click()
+            # wait for element to be clickable
+            more_tab = self.get_elem('//*[contains(text(), "more experience")]')
+            more_tab.click()
+            other_tab = self.get_elem('//*[@id="ember512"]/div/span/button')
+            other_tab.click()
         except AttributeError:
             pass
-
-        # wait for the page to load
-        sleep(self.wait_time)
 
         # get main variables
         exps = self.driver.find_elements(
@@ -140,7 +168,10 @@ class SeleniumScraper():
 
             # about
             'about': self.get_elem_text('//*[@class="pv-profile-section pv-about-section artdeco-card p5 mt4 ember-view"]'),
-            'skills': self.get_elem_item(skills, 0)
+            'skills': self.get_elem_item(skills, 0), 
+
+            # the html of the entire page
+            "profile_html":self.driver.page_source
         }
         return profile
 
