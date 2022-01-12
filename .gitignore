@@ -1,10 +1,6 @@
-virtualenv
 linkedinScraper.zip
 .DS_Store
 __pycache__
-bin
-include
-lib
 profiles.csv
-pyvenv.cfg
 invoke.txt
+.env
