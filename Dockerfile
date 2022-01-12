@@ -13,6 +13,13 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 # Install Chrome.
 RUN apt-get update && apt-get -y install google-chrome-stable
 
-# Add the python scripts
-RUN pip install --upgrade pip 
+# Import python libs
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
+
+# Add the python scripts
+RUN mkdir -p ./dist
+RUN mkdir -p ./dist/drivers
+WORKDIR ./dist
+COPY __main__.py linkedinScraper.py requirements.txt .env .
+COPY drivers/chromedriverLinux64 ./drivers
