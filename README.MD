@@ -1,10 +1,13 @@
 ## Use an already built docker image
 ```bash
-ibmcloud fn action create linkedinScraper __main__.py --docker vladimiryeghiazaryan/selenium-linkedin-scraper:v0.0.1 --web true
+docker pull vladimiryeghiazaryan/selenium-linkedin-scraper:v0.0.1
+```
+```bash
+docker run --name myLinkedinSpider -v /Users/$USER$/Desktop/scraper_folder:/dist/scraper_folder -d vladimiryeghiazaryan/selenium-linkedin-scraper:v0.0.1
 ```
 or create your own image.
 
-## Execution order:
+## Execution order for ibm-fun-action:
 ```bash
 docker build . -t <dockerhub_username>/<repo_name>:<tag_name>
 ```
@@ -27,7 +30,6 @@ docker run --rm -it --entrypoint bash <dockerhub_username>/<repo_name>:<tag_name
 ```bash
 python3 __main__.py
 ```
-
 This is the equivalent python dictionary representation of the payload. Make sure to convert it into a valid json before sending the request.
 ```python
 from decouple import config

@@ -188,9 +188,6 @@ class SeleniumScraper():
             # about
             'about': self.get_elem_text('//*[@class="pv-profile-section pv-about-section artdeco-card p5 mt4 ember-view"]'),
             'skills': self.get_elem_item(skills, 0), 
-
-            # the html of the entire page
-            "profile_html":self.driver.page_source
         }
         return profile
 
